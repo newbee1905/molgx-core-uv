@@ -33,6 +33,8 @@ from .Molecule import *
 from .DataBox import *
 from .FeatureExtraction import *
 from .Prediction import *
+from .PredictionTorch import *
+from .PredictionRapids import *
 from .Generation import *
 from .Utility import *
 from .molgxsdk import *

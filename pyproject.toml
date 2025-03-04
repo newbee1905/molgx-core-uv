@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "molgx-core-uv"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "ipython",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "rdkit>=2024.3.6",
+    "scikit-learn",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+]

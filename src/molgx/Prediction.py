@@ -510,7 +510,7 @@ class RegressionModel(object):
          """
         raise NotImplementedError('RegressionModel:param_optimization()')
 
-    def feature_selection(self):
+    def feature_selection(self, threshold=None, n_splits=3, shuffle=True, verbose=2):
         """Select important features for the prediction based on LASSO penalty (SelectFromModel).
         After the feature selection, the accuracy of the estimator is evaluated by cross validation.
 
@@ -709,7 +709,7 @@ class SklearnRegressionModel(RegressionModel):
                                    columns=["'{0}':{1}".format(self.target_property, self.get_id())])
         return estimate_df
 
-    def fit(self, data=None, verbose=True):
+    def fit(self, data=None, verbose=2):
         """Fit the model to feature vectors, and get estimates. If data is not provided, data from
         moldata is used. standard deviation of the estimates is set.
 
@@ -723,7 +723,7 @@ class SklearnRegressionModel(RegressionModel):
         self.cross_validation(data=data, verbose=verbose)
         return
 
-    def cross_validation(self, data=None, n_splits=3, shuffle=True, verbose=True):
+    def cross_validation(self, data=None, n_splits=3, shuffle=True, verbose=2):
         """Fit the model to feature vectors, and estimate the accuracy by cross validation. If data is
         not provided, data from moldata is used. standard deviation of the estimate is set.
 
@@ -759,7 +759,7 @@ class SklearnRegressionModel(RegressionModel):
         self.selection_mask = None
         return self.cv_score
 
-    def param_optimization(self, data=None, param_grid=None, n_splits=3, shuffle=True, verbose=True):
+    def param_optimization(self, data=None, param_grid=None, n_splits=3, shuffle=True, verbose=2):
         """Optimize hyperparameters of the estimator.
         If data is not provided, data from moldata is used. Accuracy of the obtained estimator
         is evaluated by cross validation.
@@ -792,7 +792,7 @@ class SklearnRegressionModel(RegressionModel):
         status = self.status
         selection_mask = self.selection_mask
         # search parameters
-        self.search_optimized_parameters(scale_data, target, param_grid, n_splits, shuffle)
+        self.search_optimized_parameters(scale_data, target, param_grid, n_splits, shuffle, verbose)
         if verbose:
             print('optimized parameters: {0}'.format(self.get_params()))
         # fit model with optimized parameters
@@ -810,7 +810,7 @@ class SklearnRegressionModel(RegressionModel):
             self.status = self.Status.OPT
             self.selection_mask = None
 
-    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle):
+    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle, verbose):
         """Optimize hyperparameters of the estimator by grid search (GridSearchCV).
 
         Args:
@@ -822,7 +822,7 @@ class SklearnRegressionModel(RegressionModel):
         """
         # grid search
         kf = RepeatedKFold(n_splits=n_splits)
-        search = GridSearchCV(self.estimator, param_grid, cv=kf).fit(data, target)
+        search = GridSearchCV(self.estimator, param_grid, cv=kf, verbose=2).fit(data, target)
         self.estimator.set_params(**search.best_params_)
 
     def plot_estimate(self, file=None, df_data=None, df_target=None, df_category=None):
@@ -914,7 +914,7 @@ class SklearnLinearRegressionModel(SklearnRegressionModel):
         """
         return True
 
-    def feature_selection(self, threshold=None, n_splits=3, shuffle=True, verbose=True):
+    def feature_selection(self, threshold=None, n_splits=3, shuffle=True, verbose=2):
         """Select important features for the prediction based on LASSO penalty (SelectFromModel).
         After the feature selection, the accuracy of the estimator is evaluated by cross validation.
 
@@ -1036,7 +1036,7 @@ class RidgeRegressionModel(SklearnLinearRegressionModel):
         """
         super().__init__(Ridge(alpha=alpha, **kwargs), moldata, target_property, features, scaler=scaler)
 
-    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle):
+    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle, verbose):
         """Optimize hyperparameters of the estimator by LassoCV.
 
         Args:
@@ -1050,7 +1050,7 @@ class RidgeRegressionModel(SklearnLinearRegressionModel):
         params = self.estimator.get_params()
         search = RidgeCV(alphas=param_grid['alpha'], cv=kf,
                          fit_intercept=params['fit_intercept'],
-                         normalize=params['normalize'])
+												 verbose=verbose)
         search.fit(data, target)
         self.estimator.set_params(alpha=search.alpha_)
 
@@ -1089,7 +1089,7 @@ class LassoRegressionModel(SklearnLinearRegressionModel):
         """
         super().__init__(Lasso(alpha=alpha, **kwargs), moldata, target_property, features, scaler=scaler)
 
-    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle):
+    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle, verbose):
         """Optimize hyperparameters of the estimator by LassoCV.
 
         Args:
@@ -1104,8 +1104,8 @@ class LassoRegressionModel(SklearnLinearRegressionModel):
         params = self.estimator.get_params()
         search = LassoCV(alphas=param_grid['alpha'], cv=kf,
                          fit_intercept=params['fit_intercept'],
-                         normalize=params['normalize'],
-                         precompute=params['precompute'])
+                         precompute=params['precompute'],
+												 verbose=2)
         search.fit(data, target)
         self.estimator.set_params(alpha=search.alpha_)
 
@@ -1147,7 +1147,7 @@ class ElasticNetRegressionModel(SklearnLinearRegressionModel):
         super().__init__(ElasticNet(alpha=alpha, l1_ratio=l1_ratio, **kwargs),
                          moldata, target_property, features, scaler=scaler)
 
-    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle):
+    def search_optimized_parameters(self, data, target, param_grid, n_splits, shuffle, verbose):
         """Optimize hyperparameters of the estimator by ElasticNetCV.
 
         Args:
@@ -1162,8 +1162,8 @@ class ElasticNetRegressionModel(SklearnLinearRegressionModel):
         params = self.estimator.get_params()
         search = ElasticNetCV(l1_ratio=param_grid['l1_ratio'], alphas=param_grid['alpha'], cv=kf,
                               fit_intercept=params['fit_intercept'],
-                              normalize=params['normalize'],
-                              precompute=params['precompute'])
+                              precompute=params['precompute'],
+															verbose=verbose)
         search.fit(data, target)
         self.estimator.set_params(alpha=search.alpha_, l1_ratio=search.l1_ratio_)
 
@@ -1203,7 +1203,7 @@ class RandomForestRegressionModel(SklearnRegressionModel):
         super().__init__(RandomForestRegressor(*kwargs),
                          moldata, target_property, features, scaler=scaler)
 
-    def feature_selection(self, threshold=None, n_splits=3, shuffle=True, verbose=True):
+    def feature_selection(self, threshold=None, n_splits=3, shuffle=True, verbose=2):
         """Select important features for the prediction based on LASSO penalty (SelectFromModel).
         After the feature selection, the accuracy of the estimator is evaluated by cross validation.
 
@@ -1228,7 +1228,7 @@ class RandomForestRegressionModel(SklearnRegressionModel):
         selection_mask = self.selection_mask
         # feature selection
         self.selection_threshold = threshold
-        self.cross_validation(data, n_splits=n_splits, shuffle=shuffle, verbose=False)
+        self.cross_validation(data, n_splits=n_splits, shuffle=shuffle, verbose=verbose)
         if self.selection_threshold is None:
             thresh = 0
         else:

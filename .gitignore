@@ -93,3 +93,13 @@ ENV/
 
 # pycharge project setting
 .idea
+
+
+example/**/*.joblib
+example/**/*.pickle
+
+example/*.joblib
+example/*.pickle
+
+*.joblib
+*.pickle

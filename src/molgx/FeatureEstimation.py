@@ -2858,8 +2858,8 @@ class FeatureEvaluator(object):
             array: an array of min/max values of features
          """
         # set valid range of features
-        value_min = np.zeros(feature_vector.shape[1], dtype=np.float)
-        value_max = np.zeros(feature_vector.shape[1], dtype=np.float)
+        value_min = np.zeros(feature_vector.shape[1], dtype=float)
+        value_max = np.zeros(feature_vector.shape[1], dtype=float)
         data_mean = np.mean(feature_vector, axis=0)
         data_std = np.std(feature_vector, axis=0)
         data_min = np.min(feature_vector, axis=0)
